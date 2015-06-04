@@ -4,7 +4,7 @@
       box_overlaps_box, line_intersects_line, point_area, point_bounds,
       point_equals_point, polygon_area, polygon_bounds, polygon_contains_point,
       polygon_intersects_line, polygon_intersects_polygon,
-      polygon_overlaps_box, polygon_overlaps_polygon, type;
+      polygon_overlaps_box, polygon_overlaps_polygon, spherical_angle, type;
 
   type = function(shape) {
     var i, val;
@@ -101,6 +101,48 @@
     };
   };
 
+  /* Returns the spherical angle between line `a` and line `b`. */
+  spherical_angle = function(a, b) {
+    var ax, ay, az, bx, by, bz, lat, lon, ux, uy, uz, vx, vy, vz;
+
+    /* Find the normal of the hyperplane defined by `a`. */
+    lat = a[0] * Math.PI / 180.0;
+    lon = a[1] * Math.PI / 180.0;
+    ux = Math.cos(lat) * Math.cos(lon);
+    uy = Math.sin(lat);
+    uz = Math.cos(lat) * Math.sin(lon);
+
+    lat = a[2] * Math.PI / 180.0;
+    lon = a[3] * Math.PI / 180.0;
+    vx = Math.cos(lat) * Math.cos(lon);
+    vy = Math.sin(lat);
+    vz = Math.cos(lat) * Math.sin(lon);
+
+    ax = uy * vz - uz * vy;
+    ay = uz * vx - ux * vz;
+    az = ux * vy - uy * vx;
+
+    /* Find the normal of the hyperplane defined by `b`. */
+    lat = b[0] * Math.PI / 180.0;
+    lon = b[1] * Math.PI / 180.0;
+    ux = Math.cos(lat) * Math.cos(lon);
+    uy = Math.sin(lat);
+    uz = Math.cos(lat) * Math.sin(lon);
+
+    lat = b[2] * Math.PI / 180.0;
+    lon = b[3] * Math.PI / 180.0;
+    vx = Math.cos(lat) * Math.cos(lon);
+    vy = Math.sin(lat);
+    vz = Math.cos(lat) * Math.sin(lon);
+
+    bx = uy * vz - uz * vy;
+    by = uz * vx - ux * vz;
+    bz = ux * vy - uy * vx;
+
+    /* cos(angle) = dot(a, b) */
+    return Math.acos(ax * bx + ay * by + az * bz);
+  };
+
   /* Points have no area, dummy. Euclid said so. */
   point_area = function(point) {
     return 0.0;
@@ -114,6 +156,7 @@
              Math.sin((Math.PI / 180.0) * box[0]));
   };
 
+  /* http://mathworld.wolfram.com/SphericalPolygon.html */
   polygon_area = function(polygon) {
     /* FIXME */
     return NaN;
