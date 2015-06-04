@@ -4,25 +4,68 @@
       box_overlaps_box, line_intersects_line, point_area, point_bounds,
       point_equals_point, polygon_area, polygon_bounds, polygon_contains_point,
       polygon_intersects_line, polygon_intersects_polygon,
-      polygon_overlaps_box, polygon_overlaps_polygon;
+      polygon_overlaps_box, polygon_overlaps_polygon, type;
 
-  arity_1 = function(point, box, polygon) {
-    return function(vertices) {
-      if(Array.isArray(vertices)) {
-        if(vertices.length === 2) {
-          return point(vertices);
-        }
+  type = function(shape) {
+    var i, val;
 
-        else if(vertices.length === 4) {
-          return box(vertices);
-        }
+    /* A shape must be an array. */
+    if(!Array.isArray(shape)) {
+      return 0;
+    }
 
-        else if(vertices.length >= 6 && !(vertices.length & 1)) {
-          return polygon(vertices);
-        }
+    /* A shape must have a nonzero, even length. */
+    i = shape.length;
+    if(i === 0 || (i & 1) === 1) {
+      return 0;
+    }
+
+    /* A shape must consist of correctly-bounded latitudes and longitudes. */
+    while(i) {
+      val = shape[--i];
+      if(!(val >= -180.0 && val <= +180.0)) {
+        return 0;
       }
 
-      throw new Error("not a valid shape");
+      val = shape[--i];
+      if(!(val >= -90.0 && val <= +90.0)) {
+        return 0;
+      }
+    }
+
+    /* A shape with a single vertex is a point. */
+    if(shape.length === 2) {
+      return 1;
+    }
+
+    /* A shape with two vertices is a box. */
+    else if(shape.length === 4) {
+      /* A box's first vertex must be smaller than it's second vertex. */
+      if(!(shape[0] <= shape[2] && shape[1] <= shape[3])) {
+        return 0;
+      }
+
+      else {
+        return 2;
+      }
+    }
+
+    /* A shape with three or more vertices is a polygon. */
+    else {
+      return 3;
+    }
+  };
+
+  arity_1 = function(point, box, polygon) {
+    return function(shape) {
+      switch(type(shape) & 3) {
+        case 0:
+          throw new TypeError("invalid shape");
+
+        case 1: return point(shape);
+        case 2: return box(shape);
+        case 3: return polygon(shape);
+      }
     };
   };
 
@@ -35,51 +78,26 @@
     polygon_polygon
   ) {
     return function(a, b) {
-      if(Array.isArray(a) && Array.isArray(b)) {
-        if(a.length === 2) {
-          if(b.length === 2) {
-            return point_point(a, b);
-          }
+      switch((((type(b) & 3) << 2) | (type(a) & 3)) & 15) {
+        case  0:
+        case  1:
+        case  2:
+        case  3:
+        case  4:
+        case  8:
+        case 12:
+          throw new Error("invalid shape");
 
-          else if(b.length === 4) {
-            return box_point(b, a);
-          }
-
-          else if(b.length >= 6 && !(b.length & 1)) {
-            return polygon_point(b, a);
-          }
-        }
-
-        else if(a.length === 4) {
-          if(b.length === 2) {
-            return box_point(a, b);
-          }
-
-          else if(b.length === 4) {
-            return box_box(a, b);
-          }
-
-          else if(b.length >= 6 && !(b.length & 1)) {
-            return polygon_box(b, a);
-          }
-        }
-
-        else if(a.length >= 6 && !(a.length & 1)) {
-          if(b.length === 2) {
-            return polygon_point(a, b);
-          }
-
-          else if(b.length === 4) {
-            return polygon_box(a, b);
-          }
-
-          else if(b.length >= 6 && !(b.length & 1)) {
-            return polygon_polygon(a, b);
-          }
-        }
+        case  5: return point_point(a, b);
+        case  6: return box_point(a, b);
+        case  7: return polygon_point(a, b);
+        case  9: return box_point(b, a);
+        case 10: return box_box(a, b);
+        case 11: return polygon_box(a, b);
+        case 13: return polygon_point(b, a);
+        case 14: return polygon_box(b, a);
+        case 15: return polygon_polygon(a, b);
       }
-
-      throw new Error("not a valid shape");
     };
   };
 
@@ -229,24 +247,24 @@
            polygon_contains_point(b, a);
   };
 
-  module.exports = {
-    area: arity_1(
-      point_area,
-      box_area,
-      polygon_area
-    ),
-    bounds: arity_1(
-      point_bounds,
-      box_bounds,
-      polygon_bounds
-    ),
-    overlaps: arity_2_commutative(
-      point_equals_point,
-      box_contains_point,
-      box_overlaps_box,
-      polygon_contains_point,
-      polygon_overlaps_box,
-      polygon_overlaps_polygon
-    )
-  };
+  exports.area = arity_1(
+    point_area,
+    box_area,
+    polygon_area
+  );
+
+  exports.bounds = arity_1(
+    point_bounds,
+    box_bounds,
+    polygon_bounds
+  );
+
+  exports.overlaps = arity_2_commutative(
+    point_equals_point,
+    box_contains_point,
+    box_overlaps_box,
+    polygon_contains_point,
+    polygon_overlaps_box,
+    polygon_overlaps_polygon
+  );
 })();
