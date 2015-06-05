@@ -188,16 +188,17 @@
      * (that is, the percentage of the globe they bound). A zone's area is more
      * complex, see: http://mathworld.wolfram.com/Zone.html */
     (function() {
-      var INV_720;
+      var INV_720, sin;
 
       INV_720 = 1.0 / 720.0;
+
+      sin = Math.sin;
 
       return function(box) {
         return INV_720 *
                (box[3] - box[1]) *
-               (Math.sin(RADIANS * box[2]) -
-                 Math.sin(RADIANS * box[0]));
-      }
+               (sin(RADIANS * box[2]) - sin(RADIANS * box[0]));
+      };
     })(),
     /* The area of a spherical polygon is actually fairly complex. The
      * below algorithm is from Graphics Gems IV, "Computing the Area of a
@@ -205,41 +206,56 @@
      * 
      * https://web.archive.org/web/20120302213241/
      *   http://tog.acm.org/resources/GraphicsGems/gemsiv/sph_poly.c */
-    function(polygon) {
-      var a, area, b, c, cos1, cos2, e, i, lat1, lat2, lon1, lon2, s;
+    (function() {
+      var INV_PI, SQRT1_2, QUARTER_PI, abs, asin, atan, cos, sqrt, tan;
 
-      area = 0.0;
+      INV_PI     = 1.0 / Math.PI;
+      SQRT1_2    = Math.SQRT1_2;
+      QUARTER_PI = 0.25 * Math.PI;
 
-      lon1 = RADIANS * polygon[1];
-      lat1 = RADIANS * polygon[0];
-      cos1 = Math.cos(lat1);
+      abs  = Math.abs;
+      asin = Math.asin;
+      atan = Math.atan;
+      cos  = Math.cos;
+      sqrt = Math.sqrt;
+      tan  = Math.tan;
 
-      for(i = polygon.length; i; ) {
-        lon2 = lon1;
-        lat2 = lat1;
-        cos2 = cos1;
+      return function(polygon) {
+        var a, area, b, c, cos1, cos2, e, i, lat1, lat2, lon1, lon2, s;
 
-        lon1 = RADIANS * polygon[--i];
-        lat1 = RADIANS * polygon[--i];
-        cos1 = Math.cos(lat1);
+        area = 0.0;
 
-        if(lon1 !== lon2) {
-          a = Math.asin(Math.SQRT1_2 * Math.sqrt((1.0 - Math.cos(lat2 - lat1)) + cos1 * cos2 * (1.0 - Math.cos(lon2 - lon1))));
-          b = 0.25 * Math.PI - 0.5 * lat2;
-          c = 0.25 * Math.PI - 0.5 * lat1;
-          s = 0.5 * (a + b + c);
+        lon1 = RADIANS * polygon[1];
+        lat1 = RADIANS * polygon[0];
+        cos1 = cos(lat1);
 
-          e = Math.abs(Math.atan(Math.sqrt(Math.abs(Math.tan(s) * Math.tan(s - a) * Math.tan(s - b) * Math.tan(s - c)))));
-          if(lon2 < lon1) {
-            e = -e;
+        for(i = polygon.length; i; ) {
+          lon2 = lon1;
+          lat2 = lat1;
+          cos2 = cos1;
+
+          lon1 = RADIANS * polygon[--i];
+          lat1 = RADIANS * polygon[--i];
+          cos1 = cos(lat1);
+
+          if(lon1 !== lon2) {
+            a = asin(SQRT1_2 * sqrt((1.0 - cos(lat2 - lat1)) + cos1 * cos2 * (1.0 - cos(lon2 - lon1))));
+            b = QUARTER_PI - 0.5 * lat2;
+            c = QUARTER_PI - 0.5 * lat1;
+            s = 0.5 * (a + b + c);
+
+            e = abs(atan(sqrt(abs(tan(s) * tan(s - a) * tan(s - b) * tan(s - c)))));
+            if(lon2 < lon1) {
+              e = -e;
+            }
+
+            area += e;
           }
-
-          area += e;
         }
-      }
 
-      return Math.abs(area) / Math.PI;
-    }
+        return INV_PI * abs(area);
+      };
+    })()
   );
 
   exports.bounds = arity_1(
@@ -255,28 +271,35 @@
       return box;
     },
     /* A polygon's bounding box is straightforward to compute. */
-    function(polygon) {
-      var bounds, i, lat, lon;
+    (function() {
+      var max, min;
 
-      i = polygon.length;
+      max = Math.max;
+      min = Math.min;
 
-      lon = polygon[--i];
-      lat = polygon[--i];
+      return function(polygon) {
+        var bounds, i, lat, lon;
 
-      bounds = [lat, lon, lat, lon];
+        i = polygon.length;
 
-      while(i) {
         lon = polygon[--i];
         lat = polygon[--i];
 
-        bounds[0] = Math.min(bounds[0], lat);
-        bounds[1] = Math.min(bounds[1], lon);
-        bounds[2] = Math.max(bounds[2], lat);
-        bounds[3] = Math.max(bounds[3], lon);
-      }
+        bounds = [lat, lon, lat, lon];
 
-      return bounds;
-    }
+        while(i) {
+          lon = polygon[--i];
+          lat = polygon[--i];
+
+          bounds[0] = min(bounds[0], lat);
+          bounds[1] = min(bounds[1], lon);
+          bounds[2] = max(bounds[2], lat);
+          bounds[3] = max(bounds[3], lon);
+        }
+
+        return bounds;
+      };
+    })()
   );
 
   exports.overlaps = arity_2_commutative(

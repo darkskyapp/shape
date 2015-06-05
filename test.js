@@ -56,6 +56,27 @@
     });
 
     describe("bounds", function() {
+      it("should fail given an invalid shape", function() {
+        assert.throws(function() {
+          shape.bounds([]);
+        });
+      });
+
+      it("should return a zero-area bounding box given a point", function() {
+        assert.deepEqual(
+          [42, -73, 42, -73],
+          shape.bounds([42, -73])
+        );
+      });
+
+      it("should return a box verbatim", function() {
+        var box;
+
+        box = [42, -73, 43, -72];
+        assert.strictEqual(box, shape.bounds(box));
+      });
+
+      it("should return the bounding box of a polygon");
     });
 
     describe("overlaps", function() {
