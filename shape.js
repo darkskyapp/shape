@@ -105,6 +105,8 @@
   polygon_intersects_line = function(polygon, line) {
     var segment, i;
 
+    segment = new Array(4);
+
     segment[0] = polygon[0];
     segment[1] = polygon[1];
 
@@ -126,6 +128,8 @@
    * other polygon. */
   polygon_intersects_polygon = function(a, b) {
     var segment, i;
+
+    segment = new Array(4);
 
     segment[0] = a[0];
     segment[1] = a[1];

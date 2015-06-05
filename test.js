@@ -181,9 +181,55 @@
         }
       );
 
-      it("should return true for a polygon that does contain a point");
+      it(
+        "should return true for a polygon that does contain a point",
+        function() {
+          var point, polygon;
 
-      it("should return false for a polygon that does not overlap a box");
+          point = [-1.5, 0];
+
+          polygon = [
+            -2,  0,
+             0, -2,
+             2,  0,
+             0,  2,
+            -2,  0,
+            -1,  0,
+             0,  1,
+             1,  0,
+             0, -1,
+            -1,  0
+          ];
+
+          assert.strictEqual(true, shape.overlaps(point, polygon));
+          assert.strictEqual(true, shape.overlaps(polygon, point));
+        }
+      );
+
+      it(
+        "should return false for a polygon that does not overlap a box",
+        function() {
+          var box, polygon;
+
+          box = [-0.4, -0.4, 0.4, 0.4];
+
+          polygon = [
+            -2,  0,
+             0, -2,
+             2,  0,
+             0,  2,
+            -2,  0,
+            -1,  0,
+             0,  1,
+             1,  0,
+             0, -1,
+            -1,  0
+          ];
+
+          assert.strictEqual(false, shape.overlaps(box, polygon));
+          assert.strictEqual(false, shape.overlaps(polygon, box));
+        }
+      );
 
       it("should return true for a polygon that does overlap a box");
 
