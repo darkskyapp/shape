@@ -117,7 +117,79 @@
         );
       });
 
-      /* FIXME */
+
+      it("should return false for a point outside of a box", function() {
+        assert.strictEqual(
+          false,
+          shape.overlaps([-1, -1, +1, +1], [2, 0])
+        );
+
+        assert.strictEqual(
+          false,
+          shape.overlaps([2, 0], [-1, -1, +1, +1])
+        );
+      });
+
+      it("should return true for a point inside of a box", function() {
+        assert.strictEqual(
+          true,
+          shape.overlaps([-1, -1, +1, +1], [0, 0])
+        );
+
+        assert.strictEqual(
+          true,
+          shape.overlaps([0, 0], [-1, -1, +1, +1])
+        );
+      });
+
+      it("should return false for two boxes that do not overlap", function() {
+        assert.strictEqual(
+          false,
+          shape.overlaps([-2, -2, -1, -1], [1, 1, 2, 2])
+        );
+      });
+
+      it("should return true for two boxes that overlap", function() {
+        assert.strictEqual(
+          true,
+          shape.overlaps([-1, -1, 0, 0], [0, 0, 1, 1])
+        );
+      });
+
+      it(
+        "should return false for a polygon that does not contain a point",
+        function() {
+          var point, polygon;
+
+          point = [0, 0];
+
+          polygon = [
+            -2,  0,
+             0, -2,
+             2,  0,
+             0,  2,
+            -2,  0,
+            -1,  0,
+             0,  1,
+             1,  0,
+             0, -1,
+            -1,  0
+          ];
+
+          assert.strictEqual(false, shape.overlaps(point, polygon));
+          assert.strictEqual(false, shape.overlaps(polygon, point));
+        }
+      );
+
+      it("should return true for a polygon that does contain a point");
+
+      it("should return false for a polygon that does not overlap a box");
+
+      it("should return true for a polygon that does overlap a box");
+
+      it("should return false for two polygons that do not overlap");
+
+      it("should return true for two polygons that overlap");
     });
   });
 })();
