@@ -1,9 +1,10 @@
 (function() {
   "use strict";
-  var assert, assertCloseTo, shape;
+  var assert, assertCloseTo, shape, wyoming;
 
-  assert = require("assert");
-  shape  = require("./");
+  assert  = require("assert");
+  shape   = require("./");
+  wyoming = require("./wyoming.json");
 
   assertCloseTo = function(expected, actual, tolerance) {
     assert(
@@ -33,8 +34,8 @@
         assert.strictEqual(0.5, shape.area([-90.0, -180.0, 0.0, +180.0]));
       });
 
-      it("should return 0.25 given a box covering the northwestern quadrisphere", function() {
-        assert.strictEqual(0.25, shape.area([-90.0, -180.0, 0.0, 0.0]));
+      it("should return 0.5 given a box covering the western hemisphere", function() {
+        assert.strictEqual(0.5, shape.area([-90.0, -180.0, +90.0, 0.0]));
       });
 
       it("should return the correct box area of Wyoming", function() {
@@ -48,12 +49,7 @@
       it("should return the correct polygonal area of Wyoming", function() {
         assertCloseTo(
           253348.0,
-          510072000.0 * shape.area([
-            41.0, -111.05,
-            41.0, -104.05,
-            45.0, -104.05,
-            45.0, -111.05
-          ]),
+          510072000.0 * shape.area(wyoming),
           500.0
         );
       });
