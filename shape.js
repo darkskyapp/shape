@@ -1,10 +1,13 @@
 (function() {
   "use strict";
-  var arity_1, arity_2_commutative, box_area, box_bounds, box_contains_point,
-      box_overlaps_box, line_intersects_line, point_area, point_bounds,
-      point_equals_point, polygon_area, polygon_bounds, polygon_contains_point,
-      polygon_intersects_line, polygon_intersects_polygon,
-      polygon_overlaps_box, polygon_overlaps_polygon, type;
+  var RADIANS, arity_1, arity_2_commutative, box_area, box_bounds,
+      box_contains_point, box_overlaps_box, line_intersects_line, point_area,
+      point_bounds, point_equals_point, polygon_area, polygon_bounds,
+      polygon_contains_point, polygon_intersects_line,
+      polygon_intersects_polygon, polygon_overlaps_box,
+      polygon_overlaps_polygon, type;
+
+  RADIANS = Math.PI / 180.0;
 
   type = function(shape) {
     var i, val;
@@ -110,54 +113,46 @@
   box_area = function(box) {
     return (1.0 / 720.0) *
            (box[3] - box[1]) *
-           (Math.sin((Math.PI / 180.0) * box[2]) -
-             Math.sin((Math.PI / 180.0) * box[0]));
+           (Math.sin(RADIANS * box[2]) -
+             Math.sin(RADIANS * box[0]));
   };
 
   /* https://web.archive.org/web/20120302213241/http://tog.acm.org/resources/GraphicsGems/gemsiv/sph_poly.c */
-  polygon_area = (function() {
-    var hav;
+  polygon_area = function(polygon) {
+    var a, area, b, c, cos1, cos2, e, i, lat1, lat2, lon1, lon2, s;
 
-    hav = function(x) {
-      return 0.5 * (1.0 - Math.cos(x));
-    };
+    area = 0.0;
 
-    return function(polygon) {
-      var a, area, b, c, cos1, cos2, e, i, lat1, lat2, lon1, lon2, s;
+    lon1 = RADIANS * polygon[1];
+    lat1 = RADIANS * polygon[0];
+    cos1 = Math.cos(lat1);
 
-      area = 0.0;
+    for(i = polygon.length; i; ) {
+      lon2 = lon1;
+      lat2 = lat1;
+      cos2 = cos1;
 
-      lon1 = polygon[1] * Math.PI / 180.0;
-      lat1 = polygon[0] * Math.PI / 180.0;
+      lon1 = RADIANS * polygon[--i];
+      lat1 = RADIANS * polygon[--i];
       cos1 = Math.cos(lat1);
 
-      for(i = polygon.length; i; ) {
-        lon2 = lon1;
-        lat2 = lat1;
-        cos2 = cos1;
+      if(lon1 !== lon2) {
+        a = Math.asin(Math.SQRT1_2 * Math.sqrt((1.0 - Math.cos(lat2 - lat1)) + cos1 * cos2 * (1.0 - Math.cos(lon2 - lon1))));
+        b = 0.25 * Math.PI - 0.5 * lat2;
+        c = 0.25 * Math.PI - 0.5 * lat1;
+        s = 0.5 * (a + b + c);
 
-        lon1 = polygon[--i] * Math.PI / 180.0;
-        lat1 = polygon[--i] * Math.PI / 180.0;
-        cos1 = Math.cos(lat1);
-
-        if(lon1 !== lon2) {
-          a = 2.0 * Math.asin(Math.sqrt(hav(lat2 - lat1) + cos1 * cos2 * hav(lon2 - lon1)));
-          b = 0.5 * Math.PI - lat2;
-          c = 0.5 * Math.PI - lat1;
-          s = 0.5 * (a + b + c);
-
-          e = Math.abs(Math.atan(Math.sqrt(Math.abs(Math.tan(0.5 * s) * Math.tan(0.5 * (s - a)) * Math.tan(0.5 * (s - b)) * Math.tan(0.5 * (s - c))))));
-          if(lon2 < lon1) {
-            e = -e;
-          }
-
-          area += e;
+        e = Math.abs(Math.atan(Math.sqrt(Math.abs(Math.tan(s) * Math.tan(s - a) * Math.tan(s - b) * Math.tan(s - c)))));
+        if(lon2 < lon1) {
+          e = -e;
         }
-      }
 
-      return Math.abs(area) / Math.PI;
-    };
-  })();
+        area += e;
+      }
+    }
+
+    return Math.abs(area) / Math.PI;
+  };
 
   /* The bounds on a point are clearly very tight. */
   point_bounds = function(point) {
