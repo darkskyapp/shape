@@ -1,11 +1,8 @@
 (function() {
   "use strict";
-  var RADIANS, arity_1, arity_2_commutative, box_area, box_bounds,
-      box_contains_point, box_overlaps_box, line_intersects_line, point_area,
-      point_bounds, point_equals_point, polygon_area, polygon_bounds,
-      polygon_contains_point, polygon_intersects_line,
-      polygon_intersects_polygon, polygon_overlaps_box,
-      polygon_overlaps_polygon, type;
+  var RADIANS, arity_1, arity_2_commutative, line_intersects_line,
+      polygon_intersects_line, polygon_intersects_polygon,
+      polygon_overlaps_box, polygon_overlaps_polygon, type;
 
   RADIANS = Math.PI / 180.0;
 
@@ -104,100 +101,6 @@
     };
   };
 
-  /* Points have no area, dummy. Euclid said so. */
-  point_area = function(point) {
-    return 0.0;
-  };
-
-  /* This assumes that the earth is a sphere with a surface area of 1. */
-  box_area = function(box) {
-    return (1.0 / 720.0) *
-           (box[3] - box[1]) *
-           (Math.sin(RADIANS * box[2]) -
-             Math.sin(RADIANS * box[0]));
-  };
-
-  /* https://web.archive.org/web/20120302213241/http://tog.acm.org/resources/GraphicsGems/gemsiv/sph_poly.c */
-  polygon_area = function(polygon) {
-    var a, area, b, c, cos1, cos2, e, i, lat1, lat2, lon1, lon2, s;
-
-    area = 0.0;
-
-    lon1 = RADIANS * polygon[1];
-    lat1 = RADIANS * polygon[0];
-    cos1 = Math.cos(lat1);
-
-    for(i = polygon.length; i; ) {
-      lon2 = lon1;
-      lat2 = lat1;
-      cos2 = cos1;
-
-      lon1 = RADIANS * polygon[--i];
-      lat1 = RADIANS * polygon[--i];
-      cos1 = Math.cos(lat1);
-
-      if(lon1 !== lon2) {
-        a = Math.asin(Math.SQRT1_2 * Math.sqrt((1.0 - Math.cos(lat2 - lat1)) + cos1 * cos2 * (1.0 - Math.cos(lon2 - lon1))));
-        b = 0.25 * Math.PI - 0.5 * lat2;
-        c = 0.25 * Math.PI - 0.5 * lat1;
-        s = 0.5 * (a + b + c);
-
-        e = Math.abs(Math.atan(Math.sqrt(Math.abs(Math.tan(s) * Math.tan(s - a) * Math.tan(s - b) * Math.tan(s - c)))));
-        if(lon2 < lon1) {
-          e = -e;
-        }
-
-        area += e;
-      }
-    }
-
-    return Math.abs(area) / Math.PI;
-  };
-
-  /* The bounds on a point are clearly very tight. */
-  point_bounds = function(point) {
-    return [point[0], point[1], point[0], point[1]];
-  };
-
-  /* "The container cannot contain itself." "Does not every container contain
-   * itself? If it did not, what would contain it?" */
-  box_bounds = function(box) {
-    return box;
-  };
-
-  polygon_bounds = function(polygon) {
-    var bounds, i, lat, lon;
-
-    bounds = [
-      Number.POSITIVE_INFINITY,
-      Number.POSITIVE_INFINITY,
-      Number.NEGATIVE_INFINITY,
-      Number.NEGATIVE_INFINITY
-    ];
-
-    for(i = polygon.length; i; ) {
-      lon = polygon[--i];
-      lat = polygon[--i];
-
-      bounds[0] = Math.min(bounds[0], lat);
-      bounds[1] = Math.min(bounds[1], lon);
-      bounds[2] = Math.max(bounds[2], lat);
-      bounds[3] = Math.max(bounds[3], lon);
-    }
-
-    return bounds;
-  };
-
-  box_contains_point = function(box, point) {
-    return box[0] <= point[0] && box[1] <= point[1] &&
-           box[2] >= point[0] && box[3] >= point[1];
-  };
-
-  polygon_contains_point = function(polygon, point) {
-    /* FIXME */
-    return false;
-  };
-
   /* A line intersects a polygon if it intersects any of its line segments. */
   polygon_intersects_line = function(polygon, line) {
     var segment, i;
@@ -241,14 +144,6 @@
     return false;
   };
 
-  point_equals_point = function(a, b) {
-    return a[0] === b[0] && a[1] === b[1];
-  };
-
-  box_overlaps_box = function(a, b) {
-    return a[0] <= b[2] && a[1] <= b[3] && a[2] >= b[0] && a[3] >= b[1];
-  };
-
   /* This is just a fancy hack that tests the winding of the points to
    * determine which side of each line the points are on. */
   line_intersects_line = function(a, b) {
@@ -282,23 +177,150 @@
            polygon_contains_point(b, a);
   };
 
+  /* Return the area of a shape as a percentage of the entire globe's area. */
   exports.area = arity_1(
-    point_area,
-    box_area,
-    polygon_area
+    /* A point has no area. Euclid's Elements, Book 1, Definition 1. */
+    function(point) {
+      return 0.0;
+    },
+    /* The area of a quadrangle is the intersection of a lune and a zone. A
+     * lune's area is just the difference in longitudes divided by 360 degrees
+     * (that is, the percentage of the globe they bound). A zone's area is more
+     * complex, see: http://mathworld.wolfram.com/Zone.html */
+    (function() {
+      var INV_720;
+
+      INV_720 = 1.0 / 720.0;
+
+      return function(box) {
+        return INV_720 *
+               (box[3] - box[1]) *
+               (Math.sin(RADIANS * box[2]) -
+                 Math.sin(RADIANS * box[0]));
+      }
+    })(),
+    /* The area of a spherical polygon is actually fairly complex. The
+     * below algorithm is from Graphics Gems IV, "Computing the Area of a
+     * Spherical Polygon," Robert D. Miller.
+     * 
+     * https://web.archive.org/web/20120302213241/
+     *   http://tog.acm.org/resources/GraphicsGems/gemsiv/sph_poly.c */
+    function(polygon) {
+      var a, area, b, c, cos1, cos2, e, i, lat1, lat2, lon1, lon2, s;
+
+      area = 0.0;
+
+      lon1 = RADIANS * polygon[1];
+      lat1 = RADIANS * polygon[0];
+      cos1 = Math.cos(lat1);
+
+      for(i = polygon.length; i; ) {
+        lon2 = lon1;
+        lat2 = lat1;
+        cos2 = cos1;
+
+        lon1 = RADIANS * polygon[--i];
+        lat1 = RADIANS * polygon[--i];
+        cos1 = Math.cos(lat1);
+
+        if(lon1 !== lon2) {
+          a = Math.asin(Math.SQRT1_2 * Math.sqrt((1.0 - Math.cos(lat2 - lat1)) + cos1 * cos2 * (1.0 - Math.cos(lon2 - lon1))));
+          b = 0.25 * Math.PI - 0.5 * lat2;
+          c = 0.25 * Math.PI - 0.5 * lat1;
+          s = 0.5 * (a + b + c);
+
+          e = Math.abs(Math.atan(Math.sqrt(Math.abs(Math.tan(s) * Math.tan(s - a) * Math.tan(s - b) * Math.tan(s - c)))));
+          if(lon2 < lon1) {
+            e = -e;
+          }
+
+          area += e;
+        }
+      }
+
+      return Math.abs(area) / Math.PI;
+    }
   );
 
   exports.bounds = arity_1(
-    point_bounds,
-    box_bounds,
-    polygon_bounds
+    /* A point has a very small bounding box... */
+    function(point) {
+      return [point[0], point[1], point[0], point[1]];
+    },
+    /* A box is it's own bounding box.
+     * 
+     * "The container cannot contain itself." "Does not every container contain
+     * itself? If it did not, what would contain it?" */
+    function(box) {
+      return box;
+    },
+    /* A polygon's bounding box is straightforward to compute. */
+    function(polygon) {
+      var bounds, i, lat, lon;
+
+      i = polygon.length;
+
+      lon = polygon[--i];
+      lat = polygon[--i];
+
+      bounds = [lat, lon, lat, lon];
+
+      while(i) {
+        lon = polygon[--i];
+        lat = polygon[--i];
+
+        bounds[0] = Math.min(bounds[0], lat);
+        bounds[1] = Math.min(bounds[1], lon);
+        bounds[2] = Math.max(bounds[2], lat);
+        bounds[3] = Math.max(bounds[3], lon);
+      }
+
+      return bounds;
+    }
   );
 
   exports.overlaps = arity_2_commutative(
-    point_equals_point,
-    box_contains_point,
-    box_overlaps_box,
-    polygon_contains_point,
+    /* Two points overlap if they are exactly equal. */
+    function(a, b) {
+      return a[0] === b[0] && a[1] === b[1];
+    },
+    /* A point and a box overlap if the point is within the box. */
+    function(box, point) {
+      return box[0] <= point[0] && box[1] <= point[1] &&
+             box[2] >= point[0] && box[3] >= point[1];
+    },
+    /* Computing whether two boxes overlap is straightforward. */
+    function(a, b) {
+      return a[0] <= b[2] && a[1] <= b[3] && a[2] >= b[0] && a[3] >= b[1];
+    },
+    /* A point and a polygon overlap if the point is within the polygon. See:
+     * http://paulbourke.net/geometry/polygonmesh/#insidepoly */
+    function(polygon, point) {
+      var contains, i, lat, lat1, lat2, lon, lon1, lon2;
+
+      contains = false;
+
+      lat = point[0];
+      lon = point[1];
+
+      lon1 = polygon[1];
+      lat1 = polygon[0];
+
+      for(i = polygon.length; i; ) {
+        lon2 = lon1;
+        lat2 = lat1;
+
+        lon1 = polygon[--i];
+        lat1 = polygon[--i];
+
+        if(((lon1 <= lon && lon < lon2) || (lon2 <= lon && lon < lon1)) &&
+           (lat < (lat2 - lat1) * (lon - lon1) / (lon2 - lon1) + lat1)) {
+          contains = !contains;
+        }
+      }
+
+      return contains;
+    },
     polygon_overlaps_box,
     polygon_overlaps_polygon
   );
