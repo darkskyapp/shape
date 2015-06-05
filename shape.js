@@ -4,7 +4,7 @@
       box_overlaps_box, line_intersects_line, point_area, point_bounds,
       point_equals_point, polygon_area, polygon_bounds, polygon_contains_point,
       polygon_intersects_line, polygon_intersects_polygon,
-      polygon_overlaps_box, polygon_overlaps_polygon, spherical_angle, type;
+      polygon_overlaps_box, polygon_overlaps_polygon, type;
 
   type = function(shape) {
     var i, val;
@@ -101,48 +101,6 @@
     };
   };
 
-  /* Returns the spherical angle between line `a` and line `b`. */
-  spherical_angle = function(a, b) {
-    var ax, ay, az, bx, by, bz, lat, lon, ux, uy, uz, vx, vy, vz;
-
-    /* Find the normal of the hyperplane defined by `a`. */
-    lat = a[0] * Math.PI / 180.0;
-    lon = a[1] * Math.PI / 180.0;
-    ux = Math.cos(lat) * Math.cos(lon);
-    uy = Math.sin(lat);
-    uz = Math.cos(lat) * Math.sin(lon);
-
-    lat = a[2] * Math.PI / 180.0;
-    lon = a[3] * Math.PI / 180.0;
-    vx = Math.cos(lat) * Math.cos(lon);
-    vy = Math.sin(lat);
-    vz = Math.cos(lat) * Math.sin(lon);
-
-    ax = uy * vz - uz * vy;
-    ay = uz * vx - ux * vz;
-    az = ux * vy - uy * vx;
-
-    /* Find the normal of the hyperplane defined by `b`. */
-    lat = b[0] * Math.PI / 180.0;
-    lon = b[1] * Math.PI / 180.0;
-    ux = Math.cos(lat) * Math.cos(lon);
-    uy = Math.sin(lat);
-    uz = Math.cos(lat) * Math.sin(lon);
-
-    lat = b[2] * Math.PI / 180.0;
-    lon = b[3] * Math.PI / 180.0;
-    vx = Math.cos(lat) * Math.cos(lon);
-    vy = Math.sin(lat);
-    vz = Math.cos(lat) * Math.sin(lon);
-
-    bx = uy * vz - uz * vy;
-    by = uz * vx - ux * vz;
-    bz = ux * vy - uy * vx;
-
-    /* cos(angle) = dot(a, b) */
-    return Math.acos(ax * bx + ay * by + az * bz);
-  };
-
   /* Points have no area, dummy. Euclid said so. */
   point_area = function(point) {
     return 0.0;
@@ -156,11 +114,50 @@
              Math.sin((Math.PI / 180.0) * box[0]));
   };
 
-  /* http://mathworld.wolfram.com/SphericalPolygon.html */
-  polygon_area = function(polygon) {
-    /* FIXME */
-    return NaN;
-  };
+  /* https://web.archive.org/web/20120302213241/http://tog.acm.org/resources/GraphicsGems/gemsiv/sph_poly.c */
+  polygon_area = (function() {
+    var hav;
+
+    hav = function(x) {
+      return 0.5 * (1.0 - Math.cos(x));
+    };
+
+    return function(polygon) {
+      var a, area, b, c, cos1, cos2, e, i, lat1, lat2, lon1, lon2, s;
+
+      area = 0.0;
+
+      lon1 = polygon[1] * Math.PI / 180.0;
+      lat1 = polygon[0] * Math.PI / 180.0;
+      cos1 = Math.cos(lat1);
+
+      for(i = polygon.length; i; ) {
+        lon2 = lon1;
+        lat2 = lat1;
+        cos2 = cos1;
+
+        lon1 = polygon[--i] * Math.PI / 180.0;
+        lat1 = polygon[--i] * Math.PI / 180.0;
+        cos1 = Math.cos(lat1);
+
+        if(lon1 !== lon2) {
+          a = 2.0 * Math.asin(Math.sqrt(hav(lat2 - lat1) + cos1 * cos2 * hav(lon2 - lon1)));
+          b = 0.5 * Math.PI - lat2;
+          c = 0.5 * Math.PI - lat1;
+          s = 0.5 * (a + b + c);
+
+          e = Math.abs(Math.atan(Math.sqrt(Math.abs(Math.tan(0.5 * s) * Math.tan(0.5 * (s - a)) * Math.tan(0.5 * (s - b)) * Math.tan(0.5 * (s - c))))));
+          if(lon2 < lon1) {
+            e = -e;
+          }
+
+          area += e;
+        }
+      }
+
+      return Math.abs(area) / Math.PI;
+    };
+  })();
 
   /* The bounds on a point are clearly very tight. */
   point_bounds = function(point) {
