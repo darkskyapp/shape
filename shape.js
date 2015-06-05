@@ -1,8 +1,8 @@
 (function() {
   "use strict";
-  var RADIANS, arity_1, arity_2_commutative, line_intersects_line,
-      polygon_intersects_line, polygon_intersects_polygon,
-      polygon_overlaps_box, polygon_overlaps_polygon, type;
+  var RADIANS, arity_1, arity_2_commutative, polygon_contains_point,
+      polygon_intersects_polygon, polygon_overlaps_box,
+      polygon_overlaps_polygon, type;
 
   RADIANS = Math.PI / 180.0;
 
@@ -101,69 +101,72 @@
     };
   };
 
-  /* A line intersects a polygon if it intersects any of its line segments. */
-  polygon_intersects_line = function(polygon, line) {
-    var segment, i;
+  /* A point and a polygon overlap if the point is within the polygon. See:
+   * http://paulbourke.net/geometry/polygonmesh/#insidepoly */
+  polygon_contains_point = function(polygon, point) {
+    var contains, i, lat, lat1, lat2, lon, lon1, lon2;
 
-    segment = new Array(4);
+    contains = false;
 
-    segment[0] = polygon[0];
-    segment[1] = polygon[1];
+    lat = point[0];
+    lon = point[1];
+
+    lon1 = polygon[1];
+    lat1 = polygon[0];
 
     for(i = polygon.length; i; ) {
-      segment[3] = segment[1];
-      segment[2] = segment[0];
-      segment[1] = polygon[--i];
-      segment[0] = polygon[--i];
+      lon2 = lon1;
+      lat2 = lat1;
 
-      if(line_intersects_line(line, segment)) {
-        return true;
+      lon1 = polygon[--i];
+      lat1 = polygon[--i];
+
+      if(((lon1 <= lon && lon < lon2) || (lon2 <= lon && lon < lon1)) &&
+         (lat < (lat2 - lat1) * (lon - lon1) / (lon2 - lon1) + lat1)) {
+        contains = !contains;
       }
     }
 
-    return false;
+    return contains;
   };
 
   /* Two polygons intersect if any of the lines of one of them intersects the
    * other polygon. */
   polygon_intersects_polygon = function(a, b) {
-    var segment, i;
+    var alat1, alat2, alon1, alon2, blat1, blat2, blon1, blon2, i, j;
 
-    segment = new Array(4);
-
-    segment[0] = a[0];
-    segment[1] = a[1];
+    alon1 = a[1];
+    alat1 = a[0];
 
     for(i = a.length; i; ) {
-      segment[3] = segment[1];
-      segment[2] = segment[0];
-      segment[1] = a[--i];
-      segment[0] = a[--i];
+      alon2 = alon1;
+      alat2 = alat1;
+      alon1 = a[--i];
+      alat1 = a[--i];
 
-      if(polygon_intersects_line(b, segment)) {
-        return true;
+      blon1 = b[1];
+      blat1 = b[0];
+
+      for(j = b.length; j; ) {
+        blon2 = blon1;
+        blat2 = blat1;
+        blon1 = b[--j];
+        blat1 = b[--j];
+
+        if(((blon1 - alon1) * (alat2 - alat1) >
+              (blat1 - alat1) * (alon2 - alon1)) !==
+           ((blon2 - alon1) * (alat2 - alat1) >
+              (blat2 - alat1) * (alon2 - alon1)) &&
+           ((alon1 - blon1) * (blat2 - blat1) >
+              (alat1 - blat1) * (blon2 - blon1)) !==
+           ((alon2 - blon1) * (blat2 - blat1) >
+              (alat2 - blat1) * (blon2 - blon1))) {
+          return true;
+        }
       }
     }
 
     return false;
-  };
-
-  /* This is just a fancy hack that tests the winding of the points to
-   * determine which side of each line the points are on. */
-  line_intersects_line = function(a, b) {
-    var alat, alon, blat, blon;
-
-    alat = a[2] - a[0];
-    alon = a[3] - a[1];
-    blat = b[2] - b[0];
-    blon = b[3] - b[1];
-
-    return (
-      ((b[1] - a[1]) * alat > (b[0] - a[0]) * alon) !==
-      ((b[3] - a[1]) * alat > (b[2] - a[0]) * alon) &&
-      ((a[1] - b[1]) * blat > (a[0] - b[0]) * blon) !==
-      ((a[3] - b[1]) * blat > (a[2] - b[0]) * blon)
-    );
   };
 
   polygon_overlaps_box = function(polygon, box) {
@@ -320,34 +323,7 @@
     function(a, b) {
       return a[0] <= b[2] && a[1] <= b[3] && a[2] >= b[0] && a[3] >= b[1];
     },
-    /* A point and a polygon overlap if the point is within the polygon. See:
-     * http://paulbourke.net/geometry/polygonmesh/#insidepoly */
-    function(polygon, point) {
-      var contains, i, lat, lat1, lat2, lon, lon1, lon2;
-
-      contains = false;
-
-      lat = point[0];
-      lon = point[1];
-
-      lon1 = polygon[1];
-      lat1 = polygon[0];
-
-      for(i = polygon.length; i; ) {
-        lon2 = lon1;
-        lat2 = lat1;
-
-        lon1 = polygon[--i];
-        lat1 = polygon[--i];
-
-        if(((lon1 <= lon && lon < lon2) || (lon2 <= lon && lon < lon1)) &&
-           (lat < (lat2 - lat1) * (lon - lon1) / (lon2 - lon1) + lat1)) {
-          contains = !contains;
-        }
-      }
-
-      return contains;
-    },
+    polygon_contains_point,
     polygon_overlaps_box,
     polygon_overlaps_polygon
   );
