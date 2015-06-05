@@ -76,10 +76,48 @@
         assert.strictEqual(box, shape.bounds(box));
       });
 
-      it("should return the bounding box of a polygon");
+      it("should return the bounding box of a polygon", function() {
+        assert.deepEqual(
+          [0, 0, 2, 3],
+          shape.bounds([0, 0, 0, 3, 2, 0])
+        );
+      });
     });
 
     describe("overlaps", function() {
+      it("should fail if the first argument is invalid", function() {
+        assert.throws(function() {
+          shape.overlaps([190, 0], [10, 0]);
+        });
+      });
+
+      it("should fail if the second argument is invalid", function() {
+        assert.throws(function() {
+          shape.overlaps([0, 0, 10, 10], [10, 10, 0, 0]);
+        });
+      });
+
+      it("should fail if both arguments are invalid", function() {
+        assert.throws(function() {
+          shape.overlaps([80, 360], [100, 0]);
+        });
+      });
+
+      it("should return false for two points that do not match", function() {
+        assert.strictEqual(
+          false,
+          shape.overlaps([0, 1], [1, 0])
+        );
+      });
+
+      it("should return true for two points that match", function() {
+        assert.strictEqual(
+          true,
+          shape.overlaps([0, 1], [0, 1])
+        );
+      });
+
+      /* FIXME */
     });
   });
 })();
