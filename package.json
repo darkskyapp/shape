@@ -1,6 +1,6 @@
 {
   "name": "shape",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "utility functions for geographical regions",
   "main": "shape.js",
   "repository": {

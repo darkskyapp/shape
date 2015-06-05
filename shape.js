@@ -1,3 +1,5 @@
+/* global exports */
+
 (function() {
   "use strict";
   var RADIANS, arity_1, arity_2_commutative, polygon_contains_point,
@@ -246,12 +248,16 @@
           cos1 = cos(lat1);
 
           if(lon1 !== lon2) {
-            a = asin(SQRT1_2 * sqrt((1.0 - cos(lat2 - lat1)) + cos1 * cos2 * (1.0 - cos(lon2 - lon1))));
+            a = asin(SQRT1_2 * sqrt(
+              (1.0 - cos(lat2 - lat1)) + cos1 * cos2 * (1.0 - cos(lon2 - lon1))
+            ));
             b = QUARTER_PI - 0.5 * lat2;
             c = QUARTER_PI - 0.5 * lat1;
             s = 0.5 * (a + b + c);
 
-            e = abs(atan(sqrt(abs(tan(s) * tan(s - a) * tan(s - b) * tan(s - c)))));
+            e = abs(atan(sqrt(abs(
+              tan(s) * tan(s - a) * tan(s - b) * tan(s - c)
+            ))));
             if(lon2 < lon1) {
               e = -e;
             }

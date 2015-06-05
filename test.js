@@ -1,3 +1,7 @@
+/* global describe */
+/* global it */
+/* global require */
+
 (function() {
   "use strict";
   var assert, assertCloseTo, shape, wyoming;
@@ -231,11 +235,60 @@
         }
       );
 
-      it("should return true for a polygon that does overlap a box");
+      it("should return true for a polygon that overlaps a box", function() {
+        var box, polygon;
 
-      it("should return false for two polygons that do not overlap");
+        box = [-0.6, -0.6, 0.6, 0.6];
 
-      it("should return true for two polygons that overlap");
+        polygon = [
+          -2,  0,
+           0, -2,
+           2,  0,
+           0,  2,
+          -2,  0,
+          -1,  0,
+           0,  1,
+           1,  0,
+           0, -1,
+          -1,  0
+        ];
+
+        assert.strictEqual(true, shape.overlaps(box, polygon));
+        assert.strictEqual(true, shape.overlaps(polygon, box));
+      });
+
+      it(
+        "should return false for two polygons that do not overlap",
+        function() {
+          assert.strictEqual(
+            false,
+            shape.overlaps(
+              [-1, 0, -2, 1, -2, -1],
+              [0, 0, -2, -2, 2, -2, 2, 2, -2, 2]
+            )
+          );
+        }
+      );
+
+      it("should return true for two polygons that intersect", function() {
+        assert.strictEqual(
+          true,
+          shape.overlaps(
+            [ 1, 0, -1,  2, -3, 0, -1, -2],
+            [-1, 0,  1, -2,  3, 0,  1,  2]
+          )
+        );
+      });
+
+      it("should return true for a polygon that contains another", function() {
+        var a, b;
+
+        a = [-1, 0, 0, -1, 1, 0, 0, 1];
+        b = [-2, 0, 0, -2, 2, 0, 0, 2];
+
+        assert.strictEqual(true, shape.overlaps(a, b));
+        assert.strictEqual(true, shape.overlaps(b, a));
+      });
     });
   });
 })();
