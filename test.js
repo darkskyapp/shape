@@ -34,13 +34,19 @@
         assert.strictEqual(1.0, shape.area([-90.0, -180.0, +90.0, +180.0]));
       });
 
-      it("should return 0.5 given a box covering the northern hemisphere", function() {
-        assert.strictEqual(0.5, shape.area([-90.0, -180.0, 0.0, +180.0]));
-      });
+      it(
+        "should return 0.5 given a box covering the northern hemisphere",
+        function() {
+          assert.strictEqual(0.5, shape.area([-90.0, -180.0, 0.0, +180.0]));
+        }
+      );
 
-      it("should return 0.5 given a box covering the western hemisphere", function() {
-        assert.strictEqual(0.5, shape.area([-90.0, -180.0, +90.0, 0.0]));
-      });
+      it(
+        "should return 0.5 given a box covering the western hemisphere",
+        function() {
+          assert.strictEqual(0.5, shape.area([-90.0, -180.0, +90.0, 0.0]));
+        }
+      );
 
       it("should return the correct box area of Wyoming", function() {
         assertCloseTo(

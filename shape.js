@@ -2,8 +2,7 @@
 
 (function() {
   "use strict";
-  var RADIANS, polygon_contains_point, polygon_intersects_polygon,
-      polygon_overlaps_box, polygon_overlaps_polygon, type;
+  var RADIANS, type;
 
   RADIANS = Math.PI / 180.0;
 
@@ -203,91 +202,9 @@
     );
   })();
 
-  /* A point and a polygon overlap if the point is within the polygon. See:
-   * http://paulbourke.net/geometry/polygonmesh/#insidepoly */
-  polygon_contains_point = function(polygon, point) {
-    var contains, i, lat, lat1, lat2, lon, lon1, lon2;
-
-    contains = false;
-
-    lat = point[0];
-    lon = point[1];
-
-    lon1 = polygon[1];
-    lat1 = polygon[0];
-
-    for(i = polygon.length; i; ) {
-      lon2 = lon1;
-      lat2 = lat1;
-
-      lon1 = polygon[--i];
-      lat1 = polygon[--i];
-
-      if(((lon1 <= lon && lon < lon2) || (lon2 <= lon && lon < lon1)) &&
-         (lat < (lat2 - lat1) * (lon - lon1) / (lon2 - lon1) + lat1)) {
-        contains = !contains;
-      }
-    }
-
-    return contains;
-  };
-
-  /* Two polygons intersect if any of the lines of one of them intersects the
-   * other polygon. */
-  polygon_intersects_polygon = function(a, b) {
-    var alat1, alat2, alon1, alon2, blat1, blat2, blon1, blon2, i, j;
-
-    alon1 = a[1];
-    alat1 = a[0];
-
-    for(i = a.length; i; ) {
-      alon2 = alon1;
-      alat2 = alat1;
-      alon1 = a[--i];
-      alat1 = a[--i];
-
-      blon1 = b[1];
-      blat1 = b[0];
-
-      for(j = b.length; j; ) {
-        blon2 = blon1;
-        blat2 = blat1;
-        blon1 = b[--j];
-        blat1 = b[--j];
-
-        if(((blon1 - alon1) * (alat2 - alat1) >
-              (blat1 - alat1) * (alon2 - alon1)) !==
-           ((blon2 - alon1) * (alat2 - alat1) >
-              (blat2 - alat1) * (alon2 - alon1)) &&
-           ((alon1 - blon1) * (blat2 - blat1) >
-              (alat1 - blat1) * (blon2 - blon1)) !==
-           ((alon2 - blon1) * (blat2 - blat1) >
-              (alat2 - blat1) * (blon2 - blon1))) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  };
-
-  polygon_overlaps_box = function(polygon, box) {
-    return polygon_overlaps_polygon(polygon, [
-      box[0], box[1],
-      box[2], box[1],
-      box[2], box[3],
-      box[0], box[3]
-    ]);
-  };
-
-  polygon_overlaps_polygon = function(a, b) {
-    return polygon_intersects_polygon(a, b) ||
-           polygon_contains_point(a, b) ||
-           polygon_contains_point(b, a);
-  };
-
   (function() {
-    var arity_2;
+    var arity_2, box_to_polygon, polygon_contains_point,
+        polygon_intersects_polygon;
 
     arity_2 = function(
       point_point,
@@ -323,8 +240,85 @@
       };
     };
 
+    box_to_polygon = function(box) {
+      return [
+        box[0], box[1],
+        box[2], box[1],
+        box[2], box[3],
+        box[1], box[3]
+      ];
+    };
+
+    /* A point and a polygon overlap if the point is within the polygon. See:
+     * http://paulbourke.net/geometry/polygonmesh/#insidepoly */
+    polygon_contains_point = function(polygon, point) {
+      var contains, i, lat, lat1, lat2, lon, lon1, lon2;
+
+      contains = false;
+
+      lat = point[0];
+      lon = point[1];
+
+      lon1 = polygon[1];
+      lat1 = polygon[0];
+
+      for(i = polygon.length; i; ) {
+        lon2 = lon1;
+        lat2 = lat1;
+
+        lon1 = polygon[--i];
+        lat1 = polygon[--i];
+
+        if(((lon1 <= lon && lon < lon2) || (lon2 <= lon && lon < lon1)) &&
+           (lat < (lat2 - lat1) * (lon - lon1) / (lon2 - lon1) + lat1)) {
+          contains = !contains;
+        }
+      }
+
+      return contains;
+    };
+
+    /* Two polygons intersect if any of the lines of one of them intersects the
+     * other polygon. */
+    polygon_intersects_polygon = function(a, b) {
+      var alat1, alat2, alon1, alon2, blat1, blat2, blon1, blon2, i, j;
+
+      alon1 = a[1];
+      alat1 = a[0];
+
+      for(i = a.length; i; ) {
+        alon2 = alon1;
+        alat2 = alat1;
+        alon1 = a[--i];
+        alat1 = a[--i];
+
+        blon1 = b[1];
+        blat1 = b[0];
+
+        for(j = b.length; j; ) {
+          blon2 = blon1;
+          blat2 = blat1;
+          blon1 = b[--j];
+          blat1 = b[--j];
+
+          if(((blon1 - alon1) * (alat2 - alat1) >
+                (blat1 - alat1) * (alon2 - alon1)) !==
+             ((blon2 - alon1) * (alat2 - alat1) >
+                (blat2 - alat1) * (alon2 - alon1)) &&
+             ((alon1 - blon1) * (blat2 - blat1) >
+                (alat1 - blat1) * (blon2 - blon1)) !==
+             ((alon2 - blon1) * (blat2 - blat1) >
+                (alat2 - blat1) * (blon2 - blon1))) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    };
+
     (function() {
-      var arity_2_commutative;
+      var arity_2_commutative, polygon_overlaps_polygon;
 
       arity_2_commutative = function(
         point_point,
@@ -353,6 +347,12 @@
         );
       };
 
+      polygon_overlaps_polygon = function(a, b) {
+        return polygon_intersects_polygon(a, b) ||
+               polygon_contains_point(a, b) ||
+               polygon_contains_point(b, a);
+      };
+
       exports.overlaps = arity_2_commutative(
         /* Two points overlap if they are exactly equal. */
         function(a, b) {
@@ -368,7 +368,9 @@
           return a[0] <= b[2] && a[1] <= b[3] && a[2] >= b[0] && a[3] >= b[1];
         },
         polygon_contains_point,
-        polygon_overlaps_box,
+        function(polygon, box) {
+          return polygon_overlaps_polygon(polygon, box_to_polygon(box));
+        },
         polygon_overlaps_polygon
       );
     })();
@@ -377,16 +379,7 @@
       var arity_2_polygons;
 
       arity_2_polygons = (function() {
-        var box_to_polygon, point_fail;
-
-        box_to_polygon = function(box) {
-          return [
-            box[0], box[1],
-            box[2], box[1],
-            box[2], box[3],
-            box[1], box[3]
-          ];
-        };
+        var point_fail;
 
         point_fail = function(a, b) {
           throw new Error("points cannot excise or be excised");
