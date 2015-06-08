@@ -407,8 +407,23 @@
       })();
 
       exports.excise = arity_2_polygons(function(a, b) {
-        /* FIXME: A must contain each of B's points. */
-        /* FIXME: A must not intersect B. */
+        var point, i;
+
+        /* A must contain each of B's points. */
+        point = new Array(2);
+        for(i = b.length; i; ) {
+          point[1] = b[--i];
+          point[0] = b[--i];
+          if(!polygon_contains_point(a, point)) {
+            throw new Error("the polygon does not wholly contain the hole");
+          }
+        }
+
+        /* A must not intersect B. */
+        if(polygon_intersects_polygon(a, b)) {
+          throw new Error("the polygon does not wholly contain the hole");
+        }
+
         /* FIXME: Find nearest pair of points between A and B. */
         /* FIXME: Ensure that B is the opposite winding of A. */
         /* FIXME: Insert B into A. */
