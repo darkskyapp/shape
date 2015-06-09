@@ -489,7 +489,7 @@
         function() {
           assert.strictEqual(
             false,
-            shape.overlaps(
+            shape.contains(
               [-2, 0, 0, -2, 2, 0, 0, 2],
               [-1, -1, 1, 1]
             )
@@ -497,9 +497,25 @@
         }
       );
 
-      it("should return false for a polygon far from a box");
+      it("should return false for a polygon far from a box", function() {
+        assert.strictEqual(
+          false,
+          shape.contains(
+            [0, -1, -1, 1, 1, 1],
+            [5, -1, 7, 1]
+          )
+        );
+      });
 
-      it("should return true for a polygon that contains another");
+      it("should return true for a polygon that contains another", function() {
+        assert.strictEqual(
+          true,
+          shape.contains(
+            [0, -4, -4, 4, 4, 4],
+            [0, -1, -1, 1, 1, 1]
+          )
+        );
+      });
 
       it("should return false for a polygon that surrounds another");
 
