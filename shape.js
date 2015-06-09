@@ -378,9 +378,9 @@
       };
 
       polygon_overlaps_polygon = function(a, b) {
-        return polygon_intersects_polygon(a, b) ||
-               polygon_contains_point(a, b) ||
-               polygon_contains_point(b, a);
+        return polygon_contains_point(a, b) ||
+               polygon_contains_point(b, a) ||
+               polygon_intersects_polygon(a, b);
       };
 
       exports.overlaps = arity_2_commutative(
@@ -401,7 +401,8 @@
       var polygon_contains_polygon;
 
       polygon_contains_polygon = function(a, b) {
-        /* FIXME */
+        return polygon_contains_point(a, b) &&
+               !polygon_intersects_polygon(a, b);
       };
 
       export.contains = arity_2(
