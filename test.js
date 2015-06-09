@@ -421,17 +421,81 @@
         );
       });
 
-      it("should return true for a polygon that contains a point");
+      it("should return true for a polygon that contains a point", function() {
+        assert.strictEqual(
+          true,
+          shape.contains([0, -2, 2, 0, 0, 2, -2, 0], [0, 0])
+        );
+      });
 
-      it("should return false for a polygon that surrounds a point");
+      it(
+        "should return false for a polygon that surrounds a point",
+        function() {
+          assert.strictEqual(
+            false,
+            shape.contains(
+              [
+                -2,  0,
+                 0, -2,
+                 2,  0,
+                 0,  2,
+                -2,  0,
+                -1,  0,
+                 0,  1,
+                 1,  0,
+                 0, -1,
+                -1,  0
+              ],
+              [0, 0]
+            )
+          );
+        }
+      );
 
-      it("should return false for a polygon far from a point");
+      it("should return false for a polygon far from a point", function() {
+        assert.strictEqual(false, shape.contains([2, 0, 3, -1, 3, 1], [0, 0]));
+      });
 
-      it("should return true for a polygon that contains a box");
+      it("should return true for a polygon that contains a box", function() {
+        assert.strictEqual(
+          true,
+          shape.contains([0, -4, 4, 0, 0, 4, -4, 0], [-1, -1, 1, 1])
+        );
+      });
 
-      it("should return false for a polygon that surrounds a box");
+      it("should return false for a polygon that surrounds a box", function() {
+        assert.strictEqual(
+          true,
+          shape.contains(
+            [
+              -2,  0,
+               0, -2,
+               2,  0,
+               0,  2,
+              -2,  0,
+              -1,  0,
+               0,  1,
+               1,  0,
+               0, -1,
+              -1,  0
+            ],
+            [0, 0, 0, 0]
+          )
+        );
+      });
 
-      it("should return false for a polygon that intersects a box");
+      it(
+        "should return false for a polygon that intersects a box",
+        function() {
+          assert.strictEqual(
+            false,
+            shape.overlaps(
+              [-2, 0, 0, -2, 2, 0, 0, 2],
+              [-1, -1, 1, 1]
+            )
+          );
+        }
+      );
 
       it("should return false for a polygon far from a box");
 
