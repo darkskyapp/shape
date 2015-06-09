@@ -405,7 +405,7 @@
                !polygon_intersects_polygon(a, b);
       };
 
-      export.contains = arity_2(
+      exports.contains = arity_2(
         point_contains_shape,
         point_contains_shape,
         point_contains_shape,
