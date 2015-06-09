@@ -519,9 +519,28 @@
 
       it("should return false for a polygon that surrounds another");
 
-      it("should return false for a polygon that intersects another");
+      it(
+        "should return false for a polygon that intersects another",
+        function() {
+          assert.strictEqual(
+            false,
+            shape.contains(
+              [-1, -2, 1, 0, -1, 2],
+              [ 1, -2, 1, 2, -1, 0]
+            )
+          );
+        }
+      );
 
-      it("should return false for two disjoint polygons");
+      it("should return false for two disjoint polygons", function() {
+          assert.strictEqual(
+            false,
+            shape.contains(
+              [-3, -2, -1, 0, -3, 2],
+              [ 3, -2,  3, 2,  1, 0]
+            )
+          );
+      });
     });
   });
 })();
