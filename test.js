@@ -324,27 +324,102 @@
         assert.strictEqual(false, shape.contains([0, -2], [-1, -1, 1, 1]));
       });
 
-      it("should return true for a point that contains a very tiny polygon");
+      it(
+        "should return true for a point that contains a very tiny polygon",
+        function() {
+          assert.strictEqual(true, shape.contains([0, 0], [0, 0, 0, 0, 0, 0]));
+        }
+      );
 
-      it("should return false for a point and a polygon that contains it");
+      it(
+        "should return false for a point and a polygon that contains it",
+        function() {
+          assert.strictEqual(
+            false,
+            shape.contains([0, 0], [0, -1, -1, 1, 1, 1])
+          );
+        }
+      );
 
-      it("should return false for a disjoint point and polygon");
+      it("should return false for a disjoint point and polygon", function() {
+        assert.strictEqual(false, shape.contains([0, 0], [0, 1, -1, 3, 1, 3]));
+      });
 
-      it("should return true for a box that contains a point");
+      it("should return true for a box that contains a point", function() {
+        assert.strictEqual(true, shape.contains([-1, -1, 1, 1], [0, 0]));
+      });
 
-      it("should return false for a box that does not contain a point");
+      it(
+        "should return false for a box that does not contain a point",
+        function() {
+          assert.strictEqual(false, shape.contains([-1, -1, 1, 1], [2, 0]));
+        }
+      );
 
-      it("should return true for a box that contains another");
+      it("should return true for a box that contains another", function() {
+        assert.strictEqual(
+          true,
+          shape.contains([-1, -1, 2, 2], [0, 0, 1, 1])
+        );
+      });
 
-      it("should return false for a box that is contained by another");
+      it(
+        "should return false for a box that is contained by another",
+        function() {
+          assert.strictEqual(
+            false,
+            shape.contains([0, 0, 1, 1], [-1, -1, 2, 2])
+          );
+        }
+      );
 
-      it("should return false for two disjoint boxes");
+      it("should return false for two boxes that intersect", function() {
+        assert.strictEqual(
+          false,
+          shape.contains([-1, -1, 1, 1], [0, 0, 2, 2])
+        );
+      });
 
-      it("should return true for a box that contains a polygon");
+      it("should return false for two disjoint boxes", function() {
+        assert.strictEqual(
+          false,
+          shape.contains([-1, -1, 0, 0], [1, 1, 2, 2])
+        );
+      });
 
-      it("should return false for a box that is contained by a polygon");
+      it("should return true for a box that contains a polygon", function() {
+        assert.strictEqual(
+          true,
+          shape.contains([-2, -2, 2, 2], [0, -1, -1, 1, 1, 1])
+        );
+      });
 
-      it("should return false for a disjoint box and polygon");
+      it(
+        "should return false for a box that is contained by a polygon",
+        function() {
+          assert.strictEqual(
+            false,
+            shape.contains([-1, -1, 1, 1], [0, -8, -8, 8, 8, 8])
+          );
+        }
+      );
+
+      it(
+        "should return false for a box that intersects a polygon",
+        function() {
+          assert.strictEqual(
+            false,
+            shape.contains([-1, -1, 1, 1], [0, -2, 2, 0, 0, 2, -2, 0])
+          );
+        }
+      );
+
+      it("should return false for a disjoint box and polygon", function() {
+        assert.strictEqual(
+          false,
+          shape.contains([-2, -2, -1, -1], [0, 2, -1, 3, 1, 3])
+        );
+      });
 
       it("should return true for a polygon that contains a point");
 
