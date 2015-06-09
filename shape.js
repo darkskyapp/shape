@@ -203,8 +203,8 @@
   })();
 
   (function() {
-    var arity_2, box_to_polygon, polygon_contains_point,
-        polygon_intersects_polygon;
+    var arity_2, box_contains_shape, box_to_polygon, point_contains_shape,
+        polygon_contains_point, polygon_intersects_polygon;
 
     arity_2 = function(
       point_point,
@@ -247,6 +247,36 @@
         box[2], box[3],
         box[1], box[3]
       ];
+    };
+
+    point_contains_shape = function(point, shape) {
+      var i;
+
+      for(i = shape.length; i; ) {
+        if(point[1] !== shape[--i] || point[0] !== shape[--i]) {
+          return false;
+        }
+      }
+
+      return true;
+    };
+
+    box_contains_shape = function(box, shape) {
+      var i, value;
+
+      for(i = shape.length; i; ) {
+        value = shape[--i];
+        if(value < box[1] || value > box[3]) {
+          return false;
+        }
+
+        value = shape[--i];
+        if(value < box[0] || value > box[2]) {
+          return false;
+        }
+      }
+
+      return true;
     };
 
     /* A point and a polygon overlap if the point is within the polygon. See:
@@ -354,16 +384,8 @@
       };
 
       exports.overlaps = arity_2_commutative(
-        /* Two points overlap if they are exactly equal. */
-        function(a, b) {
-          return a[0] === b[0] && a[1] === b[1];
-        },
-        /* A point and a box overlap if the point is within the box. */
-        function(box, point) {
-          return box[0] <= point[0] && box[1] <= point[1] &&
-                 box[2] >= point[0] && box[3] >= point[1];
-        },
-        /* Computing whether two boxes overlap is straightforward. */
+        point_contains_shape,
+        box_contains_shape,
         function(a, b) {
           return a[0] <= b[2] && a[1] <= b[3] && a[2] >= b[0] && a[3] >= b[1];
         },
@@ -376,69 +398,25 @@
     })();
 
     (function() {
-      var arity_2_polygons;
+      var polygon_contains_polygon;
 
-      arity_2_polygons = (function() {
-        var point_fail;
+      polygon_contains_polygon = function(a, b) {
+        /* FIXME */
+      };
 
-        point_fail = function(a, b) {
-          throw new Error("points cannot excise or be excised");
-        };
-
-        return function(polygon_polygon) {
-          return arity_2(
-            point_fail,
-            point_fail,
-            point_fail,
-            point_fail,
-            function(a, b) {
-              return polygon_polygon(box_to_polygon(a), box_to_polygon(b));
-            },
-            function(box, polygon) {
-              return polygon_polygon(box_to_polygon(box), polygon);
-            },
-            point_fail,
-            function(polygon, box) {
-              return polygon_polygon(polygon, box_to_polygon(box));
-            },
-            polygon_polygon
-          );
-        };
-      })();
-
-      exports.excise = (function() {
-        var polygon_contains_polygon;
-
-        polygon_contains_polygon = function(a, b) {
-          var point, i;
-
-          if(polygon_intersects_polygon(a, b)) {
-            return false;
-          }
-
-          point = new Array(2);
-          for(i = b.length; i; ) {
-            point[1] = b[--i];
-            point[0] = b[--i];
-            if(!polygon_contains_point(a, point)) {
-              return false;
-            }
-          }
-
-          return true;
-        };
-
-        return arity_2_polygons(function(a, b) {
-          /* A must contain B. */
-          if(!polygon_contains_polygon(a, b)) {
-            throw new Error("the polygon does not wholly contain the hole");
-          }
-
-          /* FIXME: Find nearest pair of points between A and B. */
-          /* FIXME: Ensure that B is the opposite winding of A. */
-          /* FIXME: Insert B into A. */
-        });
-      })();
+      export.contains = arity_2(
+        point_contains_shape,
+        point_contains_shape,
+        point_contains_shape,
+        box_contains_shape,
+        box_contains_shape,
+        box_contains_shape,
+        polygon_contains_point,
+        function(polygon, box) {
+          return polygon_contains_polygon(polygon, box_to_polygon(box));
+        },
+        polygon_contains_polygon
+      );
     })();
   })();
 })();
