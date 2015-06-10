@@ -465,21 +465,21 @@
 
       it("should return false for a polygon that surrounds a box", function() {
         assert.strictEqual(
-          true,
+          false,
           shape.contains(
             [
-              -2,  0,
-               0, -2,
-               2,  0,
-               0,  2,
-              -2,  0,
-              -1,  0,
-               0,  1,
-               1,  0,
-               0, -1,
-              -1,  0
+              -4,  0,
+               0, -4,
+               4,  0,
+               0,  4,
+              -4,  0,
+              -3,  0,
+               0,  3,
+               3,  0,
+               0, -3,
+              -3,  0
             ],
-            [0, 0, 0, 0]
+            [-1, -1, 1, 1]
           )
         );
       });

@@ -9,8 +9,11 @@ A collection of utility functions for geographical regions:
     itself, a shape). (This is useful because most functions are much faster
     for a quadrangle than they are for a polygon.)
 *   `overlaps(shape1,shape2)`: returns a boolean representing whether or not
-    two polygons overlap each other. (That is, whether they have at least a
-    point in common.)
+    two shapes overlap each other. (That is, whether they have at least a point
+    in common.)
+*   `contains(shape1,shape2)`: returns a boolean representing whether or not
+    a shape completely contains another. (That is, whether all points of
+    `shape2` are also in `shape1`.)
 
 A *shape* is an `Array` of number pairs, representing the latitude and
 longitude of a point on a planet's surface. The length of the array affects the
